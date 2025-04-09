@@ -1,0 +1,7 @@
+materials/
+notebooks/
+scripts/
+venv/
+debug.py
+test.ipynb
+__pycache__

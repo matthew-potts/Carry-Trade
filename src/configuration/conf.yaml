@@ -1,0 +1,4 @@
+database: "database/carry_trade.db"
+data_folder: "."
+fred_api_key: "d47d0627d24f9e594e4f526f044e176a"
+currency_list: "['EUR', 'GBP', 'CAD', 'JPY', 'CHF', 'AUD', 'NZD', 'NOK', 'SEK', 'DKK', 'USD']"
