@@ -1,5 +1,6 @@
+from ibind import ExternalBrokerError
 from pathlib import Path
-import abc
+from abc import ABC, abstractmethod, ABCMeta
 import yaml
 from typing import List, Dict
 import sqlite3
@@ -9,7 +10,7 @@ from src.logging.logger import project_logger
 
 _LOGGER = project_logger(f"{__name__}")
 
-class BaseDataClient(metaclass = abc.ABCMeta):
+class BaseDataClient(metaclass = ABCMeta):
 
     def __init__(self, config_file: str):
         try:   
@@ -30,7 +31,6 @@ class BaseDataClient(metaclass = abc.ABCMeta):
         self.connect_to_db()
         self.connect()
 
-
     def connect_to_db(self):
         """
         """
@@ -42,20 +42,29 @@ class BaseDataClient(metaclass = abc.ABCMeta):
         con.isolation_level = None
         return con
 
-    @abc.abstractmethod
-    def connect(self) -> None:
-        """
-        Establish connection to upstream data provider specific to child class
-        """
-        pass
-
-    @abc.abstractmethod
-    def fetch(self, item: str) -> PriceHistory:
-        """
-        Fetches data based on item argument supplied
-        """
-        pass
-
+    def fetch(self, item: str) -> Dict[str, List[PriceEntry]]:
+        try:    
+            _LOGGER.info(f"Fetching price history for item {item}")
+            conid = self.client.search_contract_by_symbol(item).data[0]['conid']
+            history = self.client.marketdata_history_by_conid(conid=conid, period='1y', bar='1d', outside_rth=True).data['data']
+            return [PriceEntry(item = item, entry = x) for x in history]
+        except ExternalBrokerError as ex:
+            _LOGGER.error(f'Error: Unable to retrieve price history for currency {item}: {ex}')        
+        
+    def build_write_query(self, entry: PriceEntry) -> str:
+        query = f"""INSERT INTO price (class, item, open, close, high, low, volume, timestamp)
+                VALUES (
+                    '{self.asset_class}',
+                    '{entry.item}', 
+                    '{entry.open}', 
+                    '{entry.close}', 
+                    '{entry.high}', 
+                    '{entry.low}',
+                    '{entry.volume}', 
+                    '{entry.timestamp}'
+                )"""
+        return query
+    
     def write(self, history: List[PriceEntry]) -> None:
         for entry in history:
             try:
@@ -67,7 +76,13 @@ class BaseDataClient(metaclass = abc.ABCMeta):
             except sqlite3.OperationalError as e:
                 _LOGGER.error(f'Failed to add entry for {entry}. Exception: {e}')
                 self.db_con.execute("ROLLBACK")
+                break
 
-    @abc.abstractmethod
-    def build_write_query(self, history: PriceEntry) -> str:
+    @property
+    @abstractmethod
+    def asset_class(self):
+        """
+        The asset class for which the data processes data.
+        Appears as an entry in the 'class' column of the 'price' table.
+        """
         pass

@@ -5,3 +5,4 @@ venv/
 debug.py
 test.ipynb
 __pycache__
+*.db

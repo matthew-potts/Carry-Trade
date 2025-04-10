@@ -6,9 +6,9 @@ def main():
     con = sqlite3.connect(f"{base_dir}/carry_trade.db")
     cur = con.cursor()
     cur.execute("""
-                CREATE TABLE IF NOT EXISTS currency 
-                (curr, open, close, high, low, volume, timestamp,
-                PRIMARY KEY (curr, timestamp))
+                CREATE TABLE IF NOT EXISTS price 
+                (class, item, open, close, high, low, volume, timestamp,
+                PRIMARY KEY (class, item, timestamp))
                 """)
 
 if __name__ == "__main__":

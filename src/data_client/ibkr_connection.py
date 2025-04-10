@@ -1,6 +1,7 @@
 from ibind import IbkrClient
 from ibind.oauth.oauth1a import OAuth1aConfig
 from src.logging.logger import project_logger
+from os import environ as env
 
 _LOGGER = project_logger(f"{__name__}")
 
