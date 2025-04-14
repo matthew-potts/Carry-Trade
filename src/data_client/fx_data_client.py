@@ -8,7 +8,7 @@ from typing import Dict, List
 
 _LOGGER = project_logger(f"{__name__}")
 
-class FXDataClient(BaseDataClient, IBKRConnection):
+class FXDataClient(BaseDataClient):
 
     def __init__(self, config_file: str):
         super().__init__(config_file)
